@@ -17,18 +17,22 @@ func CreateRouter() *gin.Engine {
 	// no authentication endpoints
 	{
 		api.POST("login", controllers.Login)
-		api.GET("users/username/:username", controllers.UsernameExists)
-		api.GET("users/email/:email", controllers.EmailExists)
+		api.POST("users", controllers.CreateUser)
+		api.GET("usernames/:username", controllers.UsernameExists)
+		api.GET("emails/:email", controllers.EmailExists)
+		api.POST("users/:username/bookmarks", controllers.CreateBookmark)
 	}
 
 	// basic authentication endpoints
-	// {
-	// 	basicAuth := api.Group("/")
-	// 	basicAuth.Use(AuthenticationRequired())
-	// 	{
-	// 		basicAuth.GET("/logout", logoutHandler)
-	// 	}
-	// }
+	{
+		basicAuth := api.Group("/")
+		basicAuth.Use(middlewares.Authentication())
+		{
+			basicAuth.GET("users/:username/bookmarks", controllers.FindBookmarksByUsername)
+			// basicAuth.POST("users/:username/bookmarks", controllers.CreateBookmark)
+			// basicAuth.GET("/logout", logoutHandler)
+		}
+	}
 
 	// admin authentication endpoints
 	// {

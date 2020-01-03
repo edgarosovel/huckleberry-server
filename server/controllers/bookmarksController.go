@@ -1,54 +1,72 @@
 package controllers
 
-// func (server *Server) CreateBookmark(w http.ResponseWriter, r *http.Request) {
+import (
+	"fmt"
+	"net/http"
 
-// 	body, err := ioutil.ReadAll(r.Body)
-// 	if err != nil {
-// 		responses.ERROR(w, http.StatusUnprocessableEntity, err)
-// 		return
-// 	}
-// 	post := models.Post{}
-// 	err = json.Unmarshal(body, &post)
-// 	if err != nil {
-// 		responses.ERROR(w, http.StatusUnprocessableEntity, err)
-// 		return
-// 	}
-// 	post.Prepare()
-// 	err = post.Validate()
-// 	if err != nil {
-// 		responses.ERROR(w, http.StatusUnprocessableEntity, err)
-// 		return
-// 	}
-// 	uid, err := auth.ExtractTokenID(r)
-// 	if err != nil {
-// 		responses.ERROR(w, http.StatusUnauthorized, errors.New("Unauthorized"))
-// 		return
-// 	}
-// 	if uid != post.AuthorID {
-// 		responses.ERROR(w, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
-// 		return
-// 	}
-// 	postCreated, err := post.SavePost(server.DB)
-// 	if err != nil {
-// 		formattedError := formaterror.FormatError(err.Error())
-// 		responses.ERROR(w, http.StatusInternalServerError, formattedError)
-// 		return
-// 	}
-// 	w.Header().Set("Location", fmt.Sprintf("%s%s/%d", r.Host, r.URL.Path, postCreated.ID))
-// 	responses.JSON(w, http.StatusCreated, postCreated)
-// }
+	"github.com/gin-gonic/gin"
+	"huckleberry.app/server/dtos"
+	"huckleberry.app/server/models"
+	"huckleberry.app/server/scraper"
+	"huckleberry.app/server/utils/formaterror"
+)
 
-// func (server *Server) GetBookmarks(w http.ResponseWriter, r *http.Request) {
+func CreateBookmark(c *gin.Context) {
+	username := c.Param("username")
+	user := models.User{Username: username}
+	user.FindByUsername()
+	if user.ID == 0 {
+		formattedError := formaterror.FormatError(http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, formattedError)
+		return
+	}
 
-// 	bookmark := models.Bookmark{}
+	bookmark := models.Bookmark{}
+	if err := c.ShouldBind(&bookmark); err != nil {
+		fmt.Println(err)
+		formattedError := formaterror.FormatError(http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, formattedError)
+		return
+	}
 
-// 	bookmarks, err := bookmark.FindAllPosts(server.DB)
-// 	if err != nil {
-// 		responses.ERROR(w, http.StatusInternalServerError, err)
-// 		return
-// 	}
-// 	responses.JSON(w, http.StatusOK, bookmarks)
-// }
+	bookmark.UserID = user.ID
+
+	if err := scraper.GetBookmarkInfo(&bookmark); err != nil {
+		formattedError := formaterror.FormatError(http.StatusUnprocessableEntity)
+		c.JSON(http.StatusUnprocessableEntity, formattedError)
+		return
+	}
+
+	bookmarkCreated, err := bookmark.Create()
+	if err != nil {
+		formattedError := formaterror.FormatError(http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, formattedError)
+		return
+	}
+
+	c.JSON(http.StatusOK, bookmarkCreated)
+
+}
+
+func FindBookmarksByUsername(c *gin.Context) {
+	username := c.Param("username")
+	user := models.User{Username: username}
+	bookmarksResponse := dtos.BookmarksResponseDTO{}
+
+	// Find user's own bookmarks
+	err := user.FindOwnBookmarks()
+	if err != nil { // username was not found
+		formattedError := formaterror.FormatError(http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, formattedError)
+		return
+	}
+	bookmarksResponse.OwnBookmarks = user.ToDTO().Bookmarks
+
+	// Find shared bookmarks from other users
+	bookmarksResponse.Shared = models.FindSharesToUser(user)
+
+	c.JSON(http.StatusOK, bookmarksResponse)
+}
 
 // func (server *Server) DeletePost(w http.ResponseWriter, r *http.Request) {
 

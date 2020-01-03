@@ -58,36 +58,24 @@ func EmailExists(c *gin.Context) {
 	c.JSON(http.StatusOK, resourceExistsDTO)
 }
 
-// func (server *Server) CreateUser(w http.ResponseWriter, r *http.Request) {
+// CreateUser is a function to register a new user
+func CreateUser(c *gin.Context) {
+	user := models.User{}
+	if err := c.ShouldBind(&user); err != nil {
+		formattedError := formaterror.FormatError(http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, formattedError)
+		return
+	}
 
-// 	body, err := ioutil.ReadAll(r.Body)
-// 	if err != nil {
-// 		responses.ERROR(w, http.StatusUnprocessableEntity, err)
-// 	}
-// 	user := models.User{}
-// 	err = json.Unmarshal(body, &user)
-// 	if err != nil {
-// 		responses.ERROR(w, http.StatusUnprocessableEntity, err)
-// 		return
-// 	}
-// 	user.Prepare()
-// 	err = user.Validate("")
-// 	if err != nil {
-// 		responses.ERROR(w, http.StatusUnprocessableEntity, err)
-// 		return
-// 	}
-// 	userCreated, err := user.SaveUser(server.DB)
+	userCreated, err := user.Create()
+	if err != nil {
+		formattedError := formaterror.FormatError(http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, formattedError)
+		return
+	}
 
-// 	if err != nil {
-
-// 		formattedError := formaterror.FormatError(err.Error())
-
-// 		responses.ERROR(w, http.StatusInternalServerError, formattedError)
-// 		return
-// 	}
-// 	w.Header().Set("Location", fmt.Sprintf("%s%s/%d", r.Host, r.RequestURI, userCreated.ID))
-// 	responses.JSON(w, http.StatusCreated, userCreated)
-// }
+	c.JSON(http.StatusOK, userCreated)
+}
 
 // func (server *Server) GetUser(w http.ResponseWriter, r *http.Request) {
 

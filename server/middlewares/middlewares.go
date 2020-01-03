@@ -1,29 +1,34 @@
 package middlewares
 
 import (
+	"net/http"
+	"time"
+
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"huckleberry.app/server/auth"
+	"huckleberry.app/server/utils/formaterror"
 )
 
 func SetHeaders() gin.HandlerFunc {
-	return cors.Default()
+	config := cors.Config{
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Authorization", "Origin", "Content-Length", "Content-Type", "Accept"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}
+	config.AllowAllOrigins = true
 
-	// return func(context *gin.Context) {
-	// 	context.Writer.Header().Add("Access-Control-Allow-Origin", "*")
-	// 	context.Writer.Header().Add("Access-Control-Max-Age", "10000")
-	// 	context.Writer.Header().Add("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
-	// 	context.Writer.Header().Add("Access-Control-Allow-Headers", "Authorization,Origin,Content-Type,Accept")
-	// 	context.Writer.Header().Set("Content-Type", "application/json")
-	// 	context.Next()
-	// }
+	return cors.New(config)
 }
 
-func SetMiddlewareAuthentication() gin.HandlerFunc {
+func Authentication() gin.HandlerFunc {
 	return func(context *gin.Context) {
 		err := auth.IsTokenValid(context.Request)
 		if err != nil {
-			// responses.ERROR(w, http.StatusUnauthorized, errors.New("Unauthorized"))
+			formattedError := formaterror.FormatError(http.StatusUnauthorized)
+			context.JSON(http.StatusUnauthorized, formattedError)
+			context.Abort()
 			return
 		}
 		context.Next()

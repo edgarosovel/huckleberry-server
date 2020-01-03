@@ -27,10 +27,10 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	userDTO := user.ToDTO()
-	userDTO.Token = token
+	userLoginDTO := user.ToLoginDTO()
+	userLoginDTO.Token = token
 
-	c.JSON(http.StatusOK, userDTO)
+	c.JSON(http.StatusOK, userLoginDTO)
 }
 
 func signIn(username, password string) (models.User, string, error) {

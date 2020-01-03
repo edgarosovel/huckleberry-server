@@ -33,6 +33,9 @@ func IsTokenValid(r *http.Request) error {
 	if err != nil {
 		return err
 	}
+	// TODO: add better validation
+	// Check expiration
+	// Check user
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		printClaims(claims)
 	}
