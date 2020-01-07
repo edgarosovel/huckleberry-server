@@ -3,6 +3,7 @@ package controllers
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"huckleberry.app/server/dtos"
@@ -68,42 +69,23 @@ func FindBookmarksByUsername(c *gin.Context) {
 	c.JSON(http.StatusOK, bookmarksResponse)
 }
 
-// func (server *Server) DeletePost(w http.ResponseWriter, r *http.Request) {
-
-// 	vars := mux.Vars(r)
-
-// 	// Is a valid post id given to us?
-// 	pid, err := strconv.ParseUint(vars["id"], 10, 64)
-// 	if err != nil {
-// 		responses.ERROR(w, http.StatusBadRequest, err)
-// 		return
-// 	}
-
-// 	// Is this user authenticated?
-// 	uid, err := auth.ExtractTokenID(r)
-// 	if err != nil {
-// 		responses.ERROR(w, http.StatusUnauthorized, errors.New("Unauthorized"))
-// 		return
-// 	}
-
-// 	// Check if the post exist
-// 	post := models.Post{}
-// 	err = server.DB.Debug().Model(models.Post{}).Where("id = ?", pid).Take(&post).Error
-// 	if err != nil {
-// 		responses.ERROR(w, http.StatusNotFound, errors.New("Unauthorized"))
-// 		return
-// 	}
-
-// 	// Is the authenticated user, the owner of this post?
-// 	if uid != post.AuthorID {
-// 		responses.ERROR(w, http.StatusUnauthorized, errors.New("Unauthorized"))
-// 		return
-// 	}
-// 	_, err = post.DeleteAPost(server.DB, pid, uid)
-// 	if err != nil {
-// 		responses.ERROR(w, http.StatusBadRequest, err)
-// 		return
-// 	}
-// 	w.Header().Set("Entity", fmt.Sprintf("%d", pid))
-// 	responses.JSON(w, http.StatusNoContent, "")
-// }
+func DeleteBookmark(c *gin.Context) {
+	// TODO: Know if user is owner of suck bookmark
+	// username := c.Param("username")
+	ID := c.Param("id")
+	bookmark := models.Bookmark{}
+	IDuint64, err := strconv.ParseUint(ID, 10, 64)
+	if err != nil {
+		formattedError := formaterror.FormatError(http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, formattedError)
+		return
+	}
+	bookmark.ID = IDuint64
+	deletedBookmark, err := bookmark.Delete()
+	if err != nil {
+		formattedError := formaterror.FormatError(http.StatusNotFound)
+		c.JSON(http.StatusNotFound, formattedError)
+		return
+	}
+	c.JSON(http.StatusOK, deletedBookmark)
+}

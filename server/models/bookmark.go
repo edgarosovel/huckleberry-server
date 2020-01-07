@@ -1,6 +1,8 @@
 package models
 
 import (
+	"errors"
+
 	"huckleberry.app/server/database"
 	"huckleberry.app/server/dtos"
 )
@@ -18,7 +20,7 @@ type Bookmark struct {
 	Description string `json:"description"`
 }
 
-// ToDTO Function to return a DTO representation
+// ToDTO returns a DTO representation
 func (b *Bookmark) ToDTO() dtos.BookmarkDTO {
 	bookmarkDTO := dtos.BookmarkDTO{
 		ID:          b.ID,
@@ -42,15 +44,13 @@ func (b *Bookmark) Create() (*Bookmark, error) {
 	return b, nil
 }
 
-// func (b *Bookmark) DeleteBookmark(db *gorm.DB, ID uint) (int, error) {
-
-// 	db = db.Debug().Delete(&Bookmark{ID: ID})
-
-// 	if db.Error != nil {
-// 		if gorm.IsRecordNotFoundError(db.Error) {
-// 			return 0, errors.New("Bookmark not found")
-// 		}
-// 		return 0, db.Error
-// 	}
-// 	return db.RowsAffected, nil
-// }
+func (b *Bookmark) Delete() (*Bookmark, error) {
+	if b.ID == 0 {
+		return &Bookmark{}, errors.New("No ID provided")
+	}
+	err := database.DB.Debug().Delete(&b).Error
+	if err != nil {
+		return &Bookmark{}, err
+	}
+	return b, nil
+}

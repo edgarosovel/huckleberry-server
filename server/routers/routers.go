@@ -20,7 +20,6 @@ func CreateRouter() *gin.Engine {
 		api.POST("users", controllers.CreateUser)
 		api.GET("usernames/:username", controllers.UsernameExists)
 		api.GET("emails/:email", controllers.EmailExists)
-		api.POST("users/:username/bookmarks", controllers.CreateBookmark)
 	}
 
 	// basic authentication endpoints
@@ -28,7 +27,16 @@ func CreateRouter() *gin.Engine {
 		basicAuth := api.Group("/")
 		basicAuth.Use(middlewares.Authentication())
 		{
+			basicAuth.POST("users/:username/bookmarks", controllers.CreateBookmark)
 			basicAuth.GET("users/:username/bookmarks", controllers.FindBookmarksByUsername)
+			basicAuth.DELETE("users/:username/bookmarks/:id", controllers.DeleteBookmark)
+
+			basicAuth.POST("users/:username/shares", controllers.CreateShare)
+			basicAuth.GET("users/:username/shares", controllers.FindSharesByUsername)
+			basicAuth.DELETE("users/:username/shares/:id", controllers.DeleteShare)
+
+			basicAuth.GET("users/:username/notifications", controllers.FindNotificationsByUsername)
+			basicAuth.PATCH("users/:username/notifications/:id", controllers.NotificationResponse)
 			// basicAuth.POST("users/:username/bookmarks", controllers.CreateBookmark)
 			// basicAuth.GET("/logout", logoutHandler)
 		}
