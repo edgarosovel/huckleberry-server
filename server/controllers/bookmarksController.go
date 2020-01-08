@@ -70,7 +70,7 @@ func FindBookmarksByUsername(c *gin.Context) {
 }
 
 func DeleteBookmark(c *gin.Context) {
-	// TODO: Know if user is owner of suck bookmark
+	// TODO: Know if user is owner of such bookmark
 	// username := c.Param("username")
 	ID := c.Param("id")
 	bookmark := models.Bookmark{}

@@ -44,7 +44,7 @@ func signIn(username, password string) (models.User, string, error) {
 	if err != nil && err == bcrypt.ErrMismatchedHashAndPassword {
 		return user, "", err
 	}
-	token, err := auth.CreateToken(user.ID)
+	token, err := auth.CreateToken(user.Username)
 
 	return user, token, err
 }

@@ -2,6 +2,8 @@ package models
 
 import (
 	"errors"
+	"fmt"
+	"strings"
 
 	"github.com/badoux/checkmail"
 	"golang.org/x/crypto/bcrypt"
@@ -29,7 +31,7 @@ func VerifyPassword(hashedPassword, password string) error {
 
 func UsernameExists(username string) (bool, error) {
 	user := User{}
-	err := database.DB.Debug().Where("username = ?", username).First(&user).Error
+	err := database.DB.Debug().Where("username = ?", strings.ToLower(username)).First(&user).Error
 
 	if err != nil {
 		return false, err
@@ -51,10 +53,11 @@ func EmailExists(email string) (bool, error) {
 
 func (u *User) ToLoginDTO() dtos.UserLoginDTO {
 	userLoginDTO := dtos.UserLoginDTO{
-		Name:     u.Name,
-		LastName: u.LastName,
-		Username: u.Username,
-		Email:    u.Email,
+		Name:         u.Name,
+		LastName:     u.LastName,
+		CompleteName: fmt.Sprintf("%s %s", u.Name, u.LastName),
+		Username:     u.Username,
+		Email:        u.Email,
 	}
 
 	return userLoginDTO
@@ -67,10 +70,11 @@ func (u *User) ToDTO() dtos.UserDTO {
 	}
 
 	userDTO := dtos.UserDTO{
-		Name:      u.Name,
-		LastName:  u.LastName,
-		Username:  u.Username,
-		Bookmarks: bookmarksDTO,
+		Name:         u.Name,
+		LastName:     u.LastName,
+		CompleteName: fmt.Sprintf("%s %s", u.Name, u.LastName),
+		Username:     u.Username,
+		Bookmarks:    bookmarksDTO,
 	}
 
 	return userDTO
@@ -86,7 +90,7 @@ func (u *User) BeforeSave() error {
 }
 
 func (u *User) FindByUsername() {
-	database.DB.Debug().Where("username = ?", u.Username).First(&u)
+	database.DB.Debug().Where("username = ?", strings.ToLower(u.Username)).First(&u)
 }
 
 // FindOwnBookmarks by ID or Username
@@ -117,6 +121,8 @@ func (u *User) ValidateForCreate() error {
 	}
 	if u.Username == "" {
 		return errors.New("Required username")
+	} else {
+		u.Username = strings.ToLower(u.Username)
 	}
 	if u.Password == "" {
 		return errors.New("Required password")

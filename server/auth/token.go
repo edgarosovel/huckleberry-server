@@ -2,6 +2,7 @@ package auth
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -13,16 +14,21 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 )
 
-func CreateToken(userID uint64) (string, error) {
+func CreateToken(username string) (string, error) {
 	claims := jwt.MapClaims{}
 	claims["authorized"] = true
-	claims["user_id"] = userID
-	claims["exp"] = time.Now().Add(time.Hour * 1).Unix() //Token expires after 1 hour
+	claims["username"] = username
+	days := os.Getenv("TOKEN_EXPIRATION_DAYS")
+	daysOfExpiration, err := strconv.Atoi(days)
+	if err != nil {
+		daysOfExpiration = 1
+	}
+	claims["exp"] = time.Now().Add(time.Hour * 24 * time.Duration(daysOfExpiration)).Unix() //Token expires after 1 hour
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(os.Getenv("API_SECRET")))
 }
 
-func IsTokenValid(r *http.Request) error {
+func IsTokenValid(r *http.Request) (string, error) {
 	tokenString := ExtractToken(r)
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -31,15 +37,15 @@ func IsTokenValid(r *http.Request) error {
 		return []byte(os.Getenv("API_SECRET")), nil
 	})
 	if err != nil {
-		return err
+		return "", err
 	}
 	// TODO: add better validation
-	// Check expiration
-	// Check user
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		printClaims(claims)
+		return fmt.Sprintf("%v", claims["username"]), nil
+		// claims["user_id"]
+		// printClaims(claims)
 	}
-	return nil
+	return "", errors.New("Unexpected error")
 }
 
 func ExtractToken(r *http.Request) string {
@@ -53,28 +59,6 @@ func ExtractToken(r *http.Request) string {
 		return strings.Split(bearerToken, " ")[1]
 	}
 	return ""
-}
-
-func ExtractTokenID(r *http.Request) (uint64, error) {
-	tokenString := ExtractToken(r)
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
-		}
-		return []byte(os.Getenv("API_SECRET")), nil
-	})
-	if err != nil {
-		return 0, err
-	}
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if ok && token.Valid {
-		uid, err := strconv.ParseUint(fmt.Sprintf("%.0f", claims["user_id"]), 10, 64)
-		if err != nil {
-			return 0, err
-		}
-		return uid, nil
-	}
-	return 0, nil
 }
 
 //Pretty display the claims nicely in the terminal

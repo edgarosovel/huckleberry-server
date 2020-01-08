@@ -61,5 +61,5 @@ func Run() {
 	// seeder.PopulateDB(database.DB)
 
 	router := routers.CreateRouter()
-	router.Run(":8080")
+	router.Run() //gin will look for env PORT
 }

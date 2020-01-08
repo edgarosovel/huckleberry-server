@@ -19,6 +19,9 @@ func FormatError(errCode int) gin.H {
 	case http.StatusNotFound:
 		return gin.H{"error": "Resource not found"}
 
+	case http.StatusForbidden:
+		return gin.H{"error": "Access to resource forbidden"}
+
 	default:
 		return gin.H{"error": "Unknown error. Try again later"}
 	}

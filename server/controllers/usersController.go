@@ -100,6 +100,7 @@ func FindNotificationsByUsername(c *gin.Context) {
 }
 
 func NotificationResponse(c *gin.Context) {
+	// TODO: Know if user is owner of such notification
 	username := c.Param("username")
 	user := models.User{Username: username}
 	user.FindByUsername()

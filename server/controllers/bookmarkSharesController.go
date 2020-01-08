@@ -14,6 +14,7 @@ import (
 func CreateShare(c *gin.Context) {
 	username := c.Param("username")
 	user := models.User{Username: username}
+
 	user.FindByUsername()
 	if user.ID == 0 {
 		formattedError := formaterror.FormatError(http.StatusBadRequest)
@@ -25,6 +26,11 @@ func CreateShare(c *gin.Context) {
 	if err := c.ShouldBind(&bookmarksShare); err != nil {
 		formattedError := formaterror.FormatError(http.StatusBadRequest)
 		c.JSON(http.StatusBadRequest, formattedError)
+		return
+	}
+
+	if username == bookmarksShare.Receiver.Username {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Can't share your bookmarks with yourself"})
 		return
 	}
 
@@ -73,7 +79,7 @@ func FindSharesByUsername(c *gin.Context) {
 }
 
 func DeleteShare(c *gin.Context) {
-	// TODO: Know if user is owner of suck bookmark
+	// TODO: Know if user is owner of such share
 	// username := c.Param("username")
 	ID := c.Param("id")
 	bookmarksShare := models.BookmarksShare{}

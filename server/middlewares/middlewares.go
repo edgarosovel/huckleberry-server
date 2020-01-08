@@ -24,10 +24,18 @@ func SetHeaders() gin.HandlerFunc {
 
 func Authentication() gin.HandlerFunc {
 	return func(context *gin.Context) {
-		err := auth.IsTokenValid(context.Request)
+		usernameInToken, err := auth.IsTokenValid(context.Request)
 		if err != nil {
 			formattedError := formaterror.FormatError(http.StatusUnauthorized)
 			context.JSON(http.StatusUnauthorized, formattedError)
+			context.Abort()
+			return
+		}
+
+		usernameInRoute := context.Param("username")
+		if usernameInRoute != usernameInToken {
+			formattedError := formaterror.FormatError(http.StatusForbidden)
+			context.JSON(http.StatusForbidden, formattedError)
 			context.Abort()
 			return
 		}
