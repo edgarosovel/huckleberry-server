@@ -52,7 +52,7 @@ func CreateShare(c *gin.Context) {
 		return
 	}
 
-	bookmarksShareDTO, err := bookmarksShare.Create()
+	bookmarksShareCreated, err := bookmarksShare.Create()
 
 	if err != nil {
 		fmt.Println(err)
@@ -60,7 +60,7 @@ func CreateShare(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, formattedError)
 		return
 	}
-	c.JSON(http.StatusOK, bookmarksShareDTO)
+	c.JSON(http.StatusOK, bookmarksShareCreated.ToDTO())
 }
 
 func FindSharesByUsername(c *gin.Context) {
